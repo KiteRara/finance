@@ -139,10 +139,10 @@
   <div class="settings">
     <button onclick="exportData()">&#128190;  Exportar dados (JSON)</button>
     <button onclick="document.getElementById('imp-file').click()">&#128194;  Importar dados (JSON)</button>
-    <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importData(event)">
+    <input type="file" id="imp-file" accept=".json" style="position:absolute;left:-9999px;width:0;height:0;opacity:0" onchange="importData(event)">
     <button onclick="exportCSV()">&#128200;  Exportar dados (CSV)</button>
-    <button onclick="document.getElementById('csv-file').click()">&#128200;  Importar dados (CSV)</button>
-    <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="importCSV(event)">
+    <button onclick="document.getElementById('csv-file').click()">&#128200;  Importar Extrato Bancário (CSV)</button>
+    <input type="file" id="csv-file" accept=".csv,.json,*/*" style="position:absolute;left:-9999px;width:0;height:0;opacity:0" onchange="importCSV(event)">
     <button class="danger" onclick="clearAll()">&#10060;  Limpar tudo</button>
   </div>
 </div>
@@ -371,19 +371,70 @@ function importCSV(e) {
     try {
       const lines = text.trim().split('\n');
       if (lines.length < 2) return alert('CSV vazio');
-      const txs = getTxs();
-      let maxId = txs.length ? Math.max(...txs.map(t => t.id)) : 0;
+      const header = lines[0].trim().toLowerCase();
       let count = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const [type, category, description, amount, date] = lines[i].split(',').map(s => s.trim());
-        if (!type || !category || !description || !amount || !date) continue;
-        maxId++;
-        txs.push({id: maxId, type, category, description: description.replace(/^"|"$/g,'').replace(/""/g,'"'), amount: parseFloat(amount), date});
-        count++;
+      if (header.includes('data') && header.includes('valor') && header.includes('descrição')) {
+        // Extrato bancário (Nubank): Data,Valor,Identificador,Descrição
+        const txs = getTxs();
+        let maxId = txs.length ? Math.max(...txs.map(t => t.id)) : 0;
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split(',');
+          if (parts.length < 4) continue;
+          const dateRaw = parts[0].trim();
+          const amount = parts[1].trim().replace('.', '').replace(',', '.');
+          const description = parts.slice(3).join(',').trim();
+          if (!dateRaw || !amount || !description) continue;
+          const amountNum = parseFloat(amount);
+          if (isNaN(amountNum)) continue;
+          const type = amountNum > 0 ? 'receita' : 'expense';
+          const date = dateRaw.split('/').reverse().join('/').split('/').length === 3 ? dateRaw.split('/').reverse().join('-') : dateRaw;
+          maxId++;
+          // Auto-categorize
+          let category = 'Other';
+          const desc = description.toLowerCase();
+          if (amountNum < 0) {
+            if (desc.includes('alimentação') || desc.includes('supermercado') || desc.includes('mercado') || desc.includes('restaurante') || desc.includes('pizzaria') || desc.includes('ifd*')) category = 'Food';
+            else if (desc.includes('telefone') || desc.includes('telefonia') || desc.includes('transit') || desc.includes('transporte') || desc.includes('uber')) category = 'Transport';
+            else if (desc.includes('aluguel') || desc.includes('moradia') || desc.includes('condomínio')) category = 'Housing';
+            else if (desc.includes('saúde') || desc.includes('farmácia') || desc.includes('médico') || desc.includes('hospital')) category = 'Health';
+            else if (desc.includes('lazer') || desc.includes('cinema') || desc.includes('netflix') || desc.includes('spotify')) category = 'Entertainment';
+            else if (desc.includes('compra') || desc.includes('loja') || desc.includes('shopping')) category = 'Shopping';
+            else if (desc.includes('educação') || desc.includes('curso') || desc.includes('livro')) category = 'Education';
+            else category = 'Other';
+          } else {
+            if (desc.includes('salário') || desc.includes('recebida')) category = 'Salary';
+            else if (desc.includes('investimento') || desc.includes('resgate')) category = 'Investments';
+            else if (desc.includes('freelance')) category = 'Freelance';
+            else category = 'Other';
+          }
+          txs.push({id: maxId, type, category, description, amount: Math.abs(amountNum), date});
+          count++;
+        }
+        saveTxs(txs);
+        refresh();
+        alert(`${count} transações importadas do extrato bancário!`);
+      } else if (header.includes('tipo') && header.includes('categoria')) {
+        // App native: tipo,categoria,descricao,valor,data
+        const txs = getTxs();
+        let maxId = txs.length ? Math.max(...txs.map(t => t.id)) : 0;
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split(',');
+          if (parts.length < 5) continue;
+          const [type, category, ...rest] = parts;
+          const date = parts[parts.length - 1].trim();
+          const amount = parts[parts.length - 2].trim();
+          const description = rest.slice(0, -1).join(',').trim();
+          if (!type || !category || !description || !amount || !date) continue;
+          maxId++;
+          txs.push({id: maxId, type: type.trim(), category: category.trim(), description: description.replace(/^"|"$/g,'').replace(/""/g,'"'), amount: parseFloat(amount), date});
+          count++;
+        }
+        saveTxs(txs);
+        refresh();
+        alert(`${count} transações importadas!`);
+      } else {
+        alert('Formato de CSV não reconhecido. Use o CSV exportado pelo app ou extrato bancário.');
       }
-      saveTxs(txs);
-      refresh();
-      alert(`${count} transações importadas!`);
     } catch { alert('Erro ao ler arquivo CSV'); }
     e.target.value = '';
   });
