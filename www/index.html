@@ -390,6 +390,11 @@ function importCSV(e) {
 }
 
 function clearAll() {
+  if(confirm('Tem certeza? Todos os dados serão apagados.')) {
+    localStorage.removeItem('finance_txs');
+    refresh();
+  }
+}
 
 load();
 </script>
