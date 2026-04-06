@@ -208,7 +208,7 @@ function fillCats(prefix) {
   const sel = document.getElementById(prefix === 'f' ? 'f-cat' : 'e-cat');
   sel.innerHTML = '';
   for (const [k,v] of Object.entries(CATS[t]?.icons || {})) {
-    const o = document.createElement('option'); o.value = k; o.textContent = iconFor(t,k)+' '+v;
+    const o = document.createElement('option'); o.value = k; o.textContent = v;
     sel.appendChild(o);
   }
 }
