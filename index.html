@@ -4,117 +4,63 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Finance</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
-
-  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
-  h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 24px; }
-
-  /* Balance */
-  .balance { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
-  .card { background: #1e293b; border-radius: 12px; padding: 20px; }
-  .card small { color: #94a3b8; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
-  .card .value { font-size: 1.5rem; font-weight: 700; margin-top: 4px; }
-  .val-green { color: #4ade80; }
-  .val-red { color: #f87171; }
-  .val-white { color: #e2e8f0; }
-
-  /* Form */
-  .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; background: #1e293b; padding: 16px; border-radius: 12px; align-items: flex-end; }
-  .form-row label { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; font-size: 0.8rem; color: #94a3b8; }
-  .form-row input, .form-row select, .form-row textarea { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 12px; color: #e2e8f0; font-size: 0.9rem; }
-  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: #6366f1; }
-  .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-  .btn-add { background: #6366f1; color: white; }
-  .btn-add:hover { background: #4f46e5; }
-  .btn-del { background: transparent; color: #94a3b8; font-size: 1.1rem; padding: 2px 6px; }
-  .btn-del:hover { color: #f87171; }
-
-  /* Table */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  th { text-align: left; padding: 10px 12px; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; }
-  td { padding: 12px; border-bottom: 1px solid #1e293b66; font-size: 0.9rem; }
-  tr:hover td { background: #1e293b55; }
-  .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 0.8rem; }
-  .pill-receita { background: #14532d22; color: #4ade80; }
-  .pill-expense { background: #7f1d1d22; color: #f87171; }
-
-  /* Chart */
-  .chart-section { margin-top: 28px; }
-  .chart-section h2 { font-size: 1.1rem; margin-bottom: 12px; }
-  .bar-wrap { display: flex; flex-direction: column; gap: 6px; }
-  .bar-row { display: flex; align-items: center; gap: 10px; }
-  .bar-row span:first-child { width: 120px; font-size: 0.85rem; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bar-bg { flex: 1; background: #1e293b; border-radius: 6px; height: 26px; position: relative; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 6px; transition: width .4s ease; }
-  .bar-amount { font-size: 0.85rem; font-weight: 600; width: 80px; text-align: right; }
-
-  /* Tabs */
-  .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #1e293b44; padding: 4px; border-radius: 10px; width: fit-content; }
-  .tab { padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: #94a3b8; border: none; background: transparent; font-weight: 500; }
-  .tab.active { background: #6366f1; color: white; }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-
-  /* Edit modal */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; align-items: center; justify-content: center; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: #1e293b; border-radius: 14px; padding: 24px; width: 360px; max-width: 90vw; }
-  .modal h3 { margin-bottom: 14px; }
-  .modal label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 0.8rem; color: #94a3b8; }
-  .modal input, .modal select, .modal textarea { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 12px; color: #e2e8f0; font-size: 0.9rem; }
-  .modal-btns { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
-  .btn-save { background: #22c55e; color: #fff; }
-  .btn-cancel { background: #334155; color: #e2e8f0; }
-
-  @media (max-width: 600px) { .balance { grid-template-columns: 1fr; } .form-row { flex-direction: column; } }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="container">
-  <h1>💳 Finance</h1>
+  <h1>&#128179; Finance</h1>
 
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-    <button class="btn btn-add" style="background:#1e293b;border:1px solid #334155" onclick="exportCSV()">Exportar CSV</button>
-    <button class="btn btn-add" style="background:#1e293b;border:1px solid #334155" onclick="document.getElementById('csv-file').click()">Importar CSV</button>
+  <div class="top-actions">
+    <button class="btn btn-add" style="background:#1e293b;border:1px solid #334155" onclick="exportCSV()">&#128200; Exportar CSV</button>
+    <button class="btn btn-add" style="background:#1e293b;border:1px solid #334155" onclick="document.getElementById('csv-file').click()">&#128200; Importar CSV</button>
     <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="importCSV(event)">
   </div>
 
+  <!-- Month filter -->
+  <div class="month-filter">
+    &nbsp;&#128197;&nbsp; <select id="month-sel"><option value="all">Todos</option></select>
+  </div>
+
+  <!-- Balance -->
+  <div class="balance">
+    <div class="card"><small>Receitas</small><div class="value val-green" id="income">R$ 0,00</div></div>
+    <div class="card"><small>Despesas</small><div class="value val-red" id="expense">R$ 0,00</div></div>
+    <div class="card"><small>Saldo</small><div class="value val-white" id="balance">R$ 0,00</div></div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-row" id="add-form">
+    <label>Tipo
+      <select id="f-type" onchange="updateCat()"></select>
+    </label>
+    <label>Categoria <select id="f-cat"></select></label>
+    <label>Descri&ccedil;&atilde;o <input id="f-desc" placeholder="ex: Sal&aacute;rio"></label>
+    <label>Valor (R$) <input id="f-amount" inputmode="numeric" class="money-input" placeholder="0,00"></label>
+    <label>Data <input id="f-date" type="date"></label>
+    <label class="checkbox-label">
+      <input type="checkbox" id="f-recurring"> Recorrente (mensal)
+    </label>
+    <button class="btn btn-add" onclick="addTx()">Adicionar</button>
+  </div>
+
+  <!-- Tabs -->
   <div class="tabs">
-    <button class="tab active" data-t="overview">Visão Geral</button>
+    <button class="tab active" data-t="overview">Vis&atilde;o Geral</button>
     <button class="tab" data-t="categories">Categorias</button>
+    <button class="tab" data-t="budgets">Or&ccedil;amentos</button>
   </div>
 
   <!-- VISAO GERAL -->
   <div class="tab-content active" id="tab-overview">
-    <div class="balance">
-      <div class="card"><small>Receitas</small><div class="value val-green" id="income">R$ 0,00</div></div>
-      <div class="card"><small>Despesas</small><div class="value val-red" id="expense">R$ 0,00</div></div>
-      <div class="card"><small>Saldo</small><div class="value val-white" id="balance">R$ 0,00</div></div>
-    </div>
-
-    <div class="form-row" id="add-form">
-      <label>Tipo
-        <select id="f-type" onchange="updateCat()"></select>
-      </label>
-      <label>Categoria <select id="f-cat"></select></label>
-      <label>Descrição <input id="f-desc" placeholder="ex: Salário"></label>
-      <label>Valor (R$) <input id="f-amount" type="number" step="0.01" min="0"></label>
-      <label>Data <input id="f-date" type="date"></label>
-      <button class="btn btn-add" onclick="addTx()">Adicionar</button>
-    </div>
-
     <!-- Chart -->
     <div class="chart-section"><h2>Por categoria</h2><div class="bar-wrap" id="cat-chart"></div></div>
-    <div class="chart-section" style="margin-top:16px"><h2>Por mês</h2><div class="bar-wrap" id="month-chart"></div></div>
+    <div class="chart-section" style="margin-top:16px"><h2>Por m&ecirc;s</h2><div class="bar-wrap" id="month-chart"></div></div>
 
     <div class="chart-section" style="margin-top:20px">
-      <h2>Transações</h2>
+      <h2>Transa&ccedil;&otilde;es</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Tipo</th><th>Cat</th><th>Descrição</th><th>Valor</th><th>Data</th><th></th></tr></thead>
+          <thead><tr><th>Tipo</th><th>Cat</th><th>Descri&ccedil;&atilde;o</th><th>Valor</th><th>Data</th><th></th></tr></thead>
           <tbody id="tx-list"></tbody>
         </table>
       </div>
@@ -123,19 +69,38 @@
 
   <!-- CATEGORIES TAB -->
   <div class="tab-content" id="tab-categories">
-    <div id="cats-grid"></div>
+    <div class="cats-grid" id="cats-grid"></div>
+  </div>
+
+  <!-- BUDGETS TAB -->
+  <div class="tab-content" id="tab-budgets">
+    <div class="budget-section">
+      <h2>Or&ccedil;amentos mensais</h2>
+      <div class="budget-input-row" id="budget-form" style="display:none">
+        <select id="budget-cat"></select>
+        <input id="budget-amount-input" type="number" step="0.01" min="0" placeholder="Limite R$">
+        <button class="btn-add-budget" onclick="addBudget()">Definir</button>
+      </div>
+      <button class="btn-budget" onclick="showBudgetForm()" style="margin-bottom:12px">+ Novo or&ccedil;amento</button>
+      <div id="budgets-grid"></div>
+    </div>
+
+    <div class="budget-section">
+      <h2>Transa&ccedil;&otilde;es recorrentes</h2>
+      <div id="recurring-grid"></div>
+    </div>
   </div>
 </div>
 
 <!-- Edit Modal -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
-    <h3>Editar Transação</h3>
+    <h3>Editar Transa&ccedil;&atilde;o</h3>
     <input type="hidden" id="e-id">
     <label>Tipo <select id="e-type" onchange="updateEditCat()"></select></label>
     <label>Categoria <select id="e-cat"></select></label>
-    <label>Descrição <input id="e-desc"></label>
-    <label>Valor (R$) <input id="e-amount" type="number" step="0.01" min="0"></label>
+    <label>Descri&ccedil;&atilde;o <input id="e-desc"></label>
+    <label>Valor (R$) <input id="e-amount" inputmode="numeric" class="money-input"></label>
     <label>Data <input id="e-date" type="date"></label>
     <div class="modal-btns">
       <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
@@ -144,20 +109,126 @@
   </div>
 </div>
 
+<!-- Confirm Modal -->
+<div class="confirm-modal-overlay" id="confirm-ov" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="confirm-modal">
+    <h3>Confirmar</h3>
+    <p id="confirm-msg">Tem certeza?</p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-cancel" id="confirm-no">Cancelar</button>
+      <button class="btn-confirm-del" id="confirm-yes">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-c" class="toast-container"></div>
+
 <script>
 const API = '';
 let cats = {};
 
-const fmt = v => parseFloat(v).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+/* ---- util ---- */
+const fmt = v => parseFloat(v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+function getTxs() { return JSON.parse(localStorage.getItem('finance_txs')||'[]'); }
+function saveTxs(txs) { localStorage.setItem('finance_txs', JSON.stringify(txs)); }
+function getRecurring() { return JSON.parse(localStorage.getItem('finance_recurring')||'[]'); }
+function saveRecurring(r) { localStorage.setItem('finance_recurring', JSON.stringify(r)); }
+function getBudgets() { return JSON.parse(localStorage.getItem('finance_budgets')||'{}'); }
+function saveBudgets(b) { localStorage.setItem('finance_budgets', JSON.stringify(b)); }
 
-async function api(url) {
-  const r = await fetch(`${API}${url}`);
-  const j = await r.json();
-  return j.data;
+/* ---- currency mask ---- */
+function setupMoneyInput(el) {
+  el.addEventListener('input', () => {
+    let digits = el.value.replace(/\D/g, '');
+    if (!digits) { el.value = ''; return; }
+    while (digits.length < 3) digits = '0' + digits;
+    const cents = digits.slice(-2);
+    const intPart = digits.slice(0, -2);
+    el.value = 'R$ ' + Number(intPart).toLocaleString('pt-BR') + ',' + cents;
+  });
+}
+function parseMoney(raw) {
+  if (!raw) return NaN;
+  let digits = raw.replace(/\D/g, '');
+  if (digits.length < 3) return digits === '' ? NaN : parseInt(digits) / 100;
+  return parseInt(digits) / 100;
+}
+
+/* ---- toast ---- */
+function toast(msg, type='success') {
+  let c = document.getElementById('toast-c');
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+/* ---- confirm ---- */
+function confirmDel(msg, onYes) {
+  const ev = document.getElementById('confirm-ov');
+  document.getElementById('confirm-msg').textContent = msg;
+  ev.classList.add('open');
+  document.getElementById('confirm-yes').onclick = () => { ev.classList.remove('open'); onYes(); };
+  document.getElementById('confirm-no').onclick = () => { ev.classList.remove('open'); };
+}
+
+/* ---- recurring sync ---- */
+function syncRecurring() {
+  if (Object.keys(cats).length === 0) return;
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  const txs = getTxs();
+  const existingKeys = new Set(txs.filter(t=>t.recurringId).map(t=>t.recurringId+'-'+t.date.slice(0,7)));
+  const recurring = getRecurring();
+  let changed = false;
+
+  for (const rec of recurring) {
+    const key = rec.id + '-' + ym;
+    if (!existingKeys.has(key)) {
+      const day = Math.min(rec.day || 1, 28);
+      const date = `${ym}-${String(day).padStart(2,'0')}`;
+      const maxId = txs.length ? Math.max(...txs.map(t=>t.id)) : 0;
+      txs.push({id:maxId+1, type:rec.type, category:rec.category, description:rec.description, amount:rec.amount, date, recurringId:rec.id});
+      changed = true;
+    }
+  }
+  if (changed) saveTxs(txs);
+}
+
+/* ---- load ---- */
+function populateMonthFilter() {
+  const sel = document.getElementById('month-sel');
+  const txs = getTxs();
+  const months = new Set();
+  for (const t of txs) months.add(t.date.slice(0,7));
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  months.add(ym);
+
+  sel.innerHTML = '';
+  const all = document.createElement('option');
+  all.value = 'all'; all.textContent = 'Todos';
+  sel.appendChild(all);
+
+  const sorted = [...months].sort().reverse();
+  for (const m of sorted) {
+    const [y,mo] = m.split('-');
+    const d = new Date(y, mo-1);
+    const o = document.createElement('option');
+    o.value = m;
+    o.textContent = d.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+    if (m === ym) o.selected = true;
+    sel.appendChild(o);
+  }
 }
 
 async function load() {
-  cats = await api('/categories');
+  syncRecurring();
+  const r = await fetch(`${API}/api/categories`);
+  const j = await r.json();
+  cats = j.data;
+
   for (const t of Object.keys(cats)) {
     const sel = document.getElementById('f-type');
     const opt = document.createElement('option');
@@ -165,8 +236,30 @@ async function load() {
     if (t === 'expense') opt.selected = true;
     sel.appendChild(opt);
   }
+
+  // edit modal type
+  const eType = document.getElementById('e-type');
+  eType.innerHTML = '';
+  for (const type of Object.keys(cats)) {
+    const o = document.createElement('option');
+    o.value = type; o.textContent = type === 'receita' ? 'Receita' : 'Despesa';
+    eType.appendChild(o);
+  }
+
   updateCat();
-  await refresh();
+  setupMoneyInput(document.getElementById('f-amount'));
+  setupMoneyInput(document.getElementById('e-amount'));
+
+  // populate budget cat select
+  const bSel = document.getElementById('budget-cat');
+  bSel.innerHTML = '';
+  for (const [k] of Object.entries(cats.expense?.icons||{})) {
+    const o = document.createElement('option'); o.value = k; o.textContent = k;
+    bSel.appendChild(o);
+  }
+
+  populateMonthFilter();
+  refresh();
 }
 
 function updateCat() {
@@ -192,23 +285,34 @@ function updateEditCat() {
   }
 }
 
-async function refresh() {
-  const txs = await api('/transactions');
-  const sum = await api('/summary');
+function refresh() {
+  syncRecurring();
+  const allTxs = getTxs();
+  allTxs.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
 
-  document.getElementById('income').textContent = fmt(sum.total_income);
-  document.getElementById('expense').textContent = fmt(sum.total_expense);
-  document.getElementById('balance').textContent = fmt(sum.balance);
+  // Balance cards always show ALL-TIME totals
+  const ineAll = allTxs.filter(t=>t.type==='receita').reduce((s,t)=>s+t.amount,0);
+  const expAll = allTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('income').textContent = fmt(ineAll);
+  document.getElementById('expense').textContent = fmt(expAll);
+  document.getElementById('balance').textContent = fmt(ineAll-expAll);
+
+  // Month filter only affects table and category chart
+  const mSel = document.getElementById('month-sel');
+  const month = mSel.value;
+  let txs = month !== 'all' ? allTxs.filter(t=>t.date && t.date.startsWith(month)) : allTxs;
 
   // table
   const tb = document.getElementById('tx-list');
   tb.innerHTML = '';
+  if (!txs.length) { tb.innerHTML='<tr><td colspan="6"><div class="empty">Nenhuma transacao</div></td></tr>'; }
   for (const t of txs) {
     const tr = document.createElement('tr');
     const label = t.type === 'receita' ? 'Receita' : 'Despesa';
     const pill = t.type === 'receita' ? 'pill-receita' : 'pill-expense';
+    const recTag = t.recurringId ? '<span class="recurring-tag">recorrente</span>' : '';
     tr.innerHTML = `
-      <td><span class="pill ${pill}">${label}</span></td>
+      <td><span class="pill ${pill}">${label}</span>${recTag}</td>
       <td>${cats[t.type]?.icons?.[t.category] || ''} ${t.category}</td>
       <td>${t.description}</td>
       <td>${fmt(t.amount)}</td>
@@ -218,68 +322,106 @@ async function refresh() {
     tb.appendChild(tr);
   }
 
-  // cat chart
-  const maxC = Math.max(1, ...sum.by_category.map(c => c.total));
+  // cat chart — reflects current filter
+  const byC={};
+  for(const t of txs){ const k=t.type+'|'+t.category; byC[k]=(byC[k]||0)+t.amount; }
+  const maxC = Math.max(1, ...Object.values(byC));
   const cc = document.getElementById('cat-chart');
   cc.innerHTML = '';
-  for (const c of sum.by_category) {
-    const ic = cats[c.type]?.icons?.[c.category] || '';
-    cc.innerHTML += `<div class="bar-row"><span>${ic} ${c.category}</span><div class="bar-bg"><div class="bar-fill" style="width:${(c.total/maxC)*100}%;background:${cats[c.type]?.color||'#888'}"></div></div><div class="bar-amount">${fmt(c.total)}</div></div>`;
+  for(const[k,v]of Object.entries(byC).sort((a,b)=>b[1]-a[1])){
+    const[type,cat]=k.split('|');
+    const ic=cats[type]?.icons?.[cat]||'';
+    cc.innerHTML+=`<div class="bar-row"><span>${ic} ${cat}</span><div class="bar-bg"><div class="bar-fill" style="width:${(v/maxC)*100}%;background:${cats[type]?.color||'#888'}"></div></div><div class="bar-amount">${fmt(v)}</div></div>`;
   }
 
-  // month chart
-  const maxM = Math.max(1, ...sum.by_month.map(c => c.total));
+  // month chart — always ALL time
+  const byM={};
+  for(const t of allTxs){ const m=t.date.slice(0,7); const k=m+'|'+(t.type==='receita'?'💚':'❤️'); byM[k]=(byM[k]||0)+t.amount; }
+  const maxM = Math.max(1, ...Object.values(byM));
   const mc = document.getElementById('month-chart');
   mc.innerHTML = '';
-  for (const m of sum.by_month) {
-    const tag = m.type === 'receita' ? '💚' : '❤️';
-    mc.innerHTML += `<div class="bar-row"><span>${m.month} ${tag}</span><div class="bar-bg"><div class="bar-fill" style="width:${(m.total/maxM)*100}%;background:${m.type==='receita'?'#4ade80':'#f87171'}"></div></div><div class="bar-amount">${fmt(m.total)}</div></div>`;
+  for(const[k,v]of Object.entries(byM)){
+    const[mon,tag]=k.split('|');
+    mc.innerHTML+=`<div class="bar-row"><span>${mon} ${tag}</span><div class="bar-bg"><div class="bar-fill" style="width:${(v/maxM)*100}%;background:${tag==='💚'?'#4ade80':'#f87171'}"></div></div><div class="bar-amount">${fmt(v)}</div></div>`;
   }
+
+  renderBudgets(txs);
+  showRecurring();
 }
 
 async function addTx() {
   const type = document.getElementById('f-type').value;
   const category = document.getElementById('f-cat').value;
   const desc = document.getElementById('f-desc').value.trim();
-  const amount = parseFloat(document.getElementById('f-amount').value);
+  const amount = parseMoney(document.getElementById('f-amount').value);
   const date = document.getElementById('f-date').value;
-  if (!desc || !amount || !date) return alert('Preencha todos os campos');
-  await fetch(`${API}/transactions`, {
+  const isRecurring = document.getElementById('f-recurring').checked;
+  if (!desc || !amount || !date) return toast('Preencha todos os campos','error');
+  if (amount <= 0) return toast('Valor deve ser maior que zero','error');
+
+  // persist locally too (for offline)
+  const txs = getTxs();
+  const id = txs.length ? Math.max(...txs.map(t=>t.id)) + 1 : 1;
+  txs.push({id, type, category, description:desc, amount, date});
+  saveTxs(txs);
+
+  if (isRecurring) {
+    const day = new Date(date+'T12:00:00').getDate();
+    const recurring = getRecurring();
+    const rid = 'r_' + Date.now();
+    recurring.push({id:rid, type, category, description:desc, amount, day});
+    saveRecurring(recurring);
+  }
+
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-recurring').checked = false;
+  populateMonthFilter();
+  refresh();
+  toast('Transação adicionada!');
+
+  // Also save to backend
+  fetch(`${API}/transactions`, {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({type, category, description: desc, amount, date})
   });
-  document.getElementById('f-desc').value = '';
-  document.getElementById('f-amount').value = '';
-  await refresh();
 }
 
 async function delTx(id) {
-  if (!confirm('Apagar?')) return;
-  await fetch(`${API}/transactions/${id}`, {method:'DELETE'});
-  await refresh();
+  confirmDel('Apagar esta transação?', async () => {
+    saveTxs(getTxs().filter(t=>t.id!==id));
+    refresh();
+    toast('Transação apagada','info');
+    fetch(`${API}/transactions/${id}`, {method:'DELETE'});
+  });
 }
 
 function editTx(id) {
-  fetch(`${API}/transactions`).then(r=>r.json()).then(j=>{
-    const t = j.data.find(x=>x.id===id);
-    if (!t) return;
-    document.getElementById('e-id').value = t.id;
-    // reset type options
-    const sel = document.getElementById('e-type');
-    sel.innerHTML = '';
-    for (const tp of Object.keys(cats)) {
-      const o = document.createElement('option');
-      o.value = tp; o.textContent = tp==='receita'?'Receita':'Despesa';
-      sel.appendChild(o);
-    }
-    sel.value = t.type;
-    updateEditCat();
-    document.getElementById('e-cat').value = t.category;
-    document.getElementById('e-desc').value = t.description;
-    document.getElementById('e-amount').value = t.amount;
-    document.getElementById('e-date').value = t.date;
-    document.getElementById('edit-modal').classList.add('open');
-  });
+  const t = getTxs().find(x=>x.id===id);
+  if (!t) return;
+  document.getElementById('e-id').value = t.id;
+  // reset type options
+  const sel = document.getElementById('e-type');
+  sel.innerHTML = '';
+  for (const tp of Object.keys(cats)) {
+    const o = document.createElement('option');
+    o.value = tp; o.textContent = tp==='receita'?'Receita':'Despesa';
+    sel.appendChild(o);
+  }
+  sel.value = t.type;
+  updateEditCat();
+  document.getElementById('e-cat').value = t.category;
+  document.getElementById('e-desc').value = t.description;
+  document.getElementById('e-amount').value = fmtInput(String(t.amount));
+  document.getElementById('e-date').value = t.date;
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function fmtInput(amount) {
+  const n = (parseFloat(amount) * 100).toFixed(0);
+  let digits = String(n);
+  while (digits.length < 3) digits = '0' + digits;
+  return 'R$ ' + Number(digits.slice(0,-2)).toLocaleString('pt-BR') + ',' + digits.slice(-2);
 }
 
 async function saveTx() {
@@ -287,13 +429,23 @@ async function saveTx() {
   const body = {};
   body.category = document.getElementById('e-cat').value;
   body.description = document.getElementById('e-desc').value;
-  body.amount = parseFloat(document.getElementById('e-amount').value);
+  body.amount = parseMoney(document.getElementById('e-amount').value);
   body.date = document.getElementById('e-date').value;
-  await fetch(`${API}/transactions/${id}`, {
+  body.type = document.getElementById('e-type').value;
+
+  // update local
+  const txs = getTxs();
+  const t = txs.find(x=>x.id===parseInt(id));
+  if (t) Object.assign(t, body);
+  saveTxs(txs);
+
+  closeModal();
+  refresh();
+  toast('Transação atualizada!');
+
+  fetch(`${API}/transactions/${id}`, {
     method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
   });
-  closeModal();
-  await refresh();
 }
 
 function closeModal() { document.getElementById('edit-modal').classList.remove('open'); }
@@ -305,46 +457,142 @@ document.querySelectorAll('.tab').forEach(btn => {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.t).classList.add('active');
-    if (btn.dataset.t === 'categories') showCatsTab();
   });
 });
 
-function showCatsTab() {
-  const g = document.getElementById('cats-grid');
-  g.innerHTML = '';
-  for (const [type, c] of Object.entries(cats)) {
-    const label = type === 'receita' ? 'Receitas' : 'Despesas';
-    let html = `<div style="margin-bottom:20px"><h3 style="margin-bottom:8px">${label}</h3>`;
-    html += c.icons ? Object.entries(c.icons).map(([ic, em]) => `<div style="font-size:1rem;padding:4px 0">${em} ${ic}</div>`).join('') : '';
-    html += '</div>';
-    g.innerHTML += html;
+/* ---- budgets ---- */
+function renderBudgets(txs) {
+  const container = document.getElementById('budgets-grid');
+  if (!container) return;
+  const budgets = getBudgets();
+  const keys = Object.keys(budgets);
+  if (!keys.length) {
+    container.innerHTML = '<p class="empty" style="font-size:0.85rem">Nenhum orçamento definido.</p>';
+    return;
+  }
+  const expenseTx = txs.filter(t=>t.type==='expense');
+  const byCat = {};
+  for (const t of expenseTx) byCat[t.category] = (byCat[t.category]||0) + t.amount;
+  container.innerHTML = '';
+  for (const [cat, limit] of Object.entries(budgets)) {
+    const spent = byCat[cat] || 0;
+    const pct = Math.min(100, Math.round((spent / Math.max(limit,1)) * 100));
+    const color = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e';
+    const ic = cats.expense?.icons?.[cat] || '';
+    container.innerHTML += `
+      <div class="budget-card">
+        <div class="budget-info">
+          <div class="budget-label">${ic} ${cat}</div>
+          <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <div class="budget-amount">${fmt(spent)} / ${fmt(limit)}</div>
+        </div>
+        <button class="btn-del" onclick="delBudget('${cat}')" title="Remover">✕</button>
+      </div>`;
   }
 }
+
+function showBudgetForm() {
+  const f = document.getElementById('budget-form');
+  f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+}
+
+function addBudget() {
+  const cat = document.getElementById('budget-cat').value;
+  const amount = parseFloat(document.getElementById('budget-amount-input').value);
+  if (!amount || amount <= 0) return toast('Valor inválido','error');
+  const budgets = getBudgets();
+  budgets[cat] = amount;
+  saveBudgets(budgets);
+  document.getElementById('budget-amount-input').value = '';
+  document.getElementById('budget-form').style.display = 'none';
+  refresh();
+  toast('Orçamento definido!');
+}
+
+function delBudget(cat) {
+  confirmDel('Remover orçamento de '+cat+'?', () => {
+    const budgets = getBudgets();
+    delete budgets[cat];
+    saveBudgets(budgets);
+    refresh();
+    toast('Orçamento removido','info');
+  });
+}
+
+/* ---- recurring ---- */
+function showRecurring() {
+  const container = document.getElementById('recurring-grid');
+  if (!container) return;
+  const recurring = getRecurring();
+  if (!recurring.length) {
+    container.innerHTML = '<p class="empty" style="font-size:0.85rem">Nenhuma transação recorrente.</p>';
+    return;
+  }
+  container.innerHTML = '';
+  for (const r of recurring) {
+    const ic = cats[r.type]?.icons?.[r.category] || '';
+    container.innerHTML += `
+      <div class="recurring-item">
+        <div class="recurring-item-info">${ic} ${r.description} — ${fmt(r.amount)} (dia ${r.day})</div>
+        <button class="btn-del" onclick="delRecurring('${r.id}')" title="Remover">✕</button>
+      </div>`;
+  }
+}
+
+function delRecurring(id) {
+  confirmDel('Remover recorrente?', () => {
+    saveRecurring(getRecurring().filter(r=>r.id!==id));
+    showRecurring();
+    toast('Recorrente removido','info');
+  });
+}
+
+// Month filter change
+document.getElementById('month-sel').addEventListener('change', () => { refresh(); });
 
 // Init default date
 document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
 
 // CSV
 async function exportCSV() {
-  const r = await fetch(`${API}/api/export-csv`);
-  const blob = await r.blob();
+  const txs = getTxs();
+  let csv = 'tipo,categoria,descricao,valor,data\n';
+  for (const t of txs) csv += `${t.type},${t.category},"${t.description.replace(/"/g,'""')}",${t.amount},${t.date}\n`;
+  const blob = new Blob([csv], {type:'text/csv'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'finance_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
+  toast('CSV exportado!');
 }
 
 async function importCSV(e) {
   const file = e.target.files[0]; if (!file) return;
-  const body = new FormData();
-  body.append('file', file);
-  const r = await fetch(`${API}/api/import-csv`, {
-    method: 'POST', headers: {'Content-Type': 'text/csv'},
-    body: file
-  });
-  const j = await r.json();
-  alert(`${j.data.imported} transações importadas!`);
-  await refresh();
+  const text = await file.text();
+  try {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return toast('CSV vazio','error');
+    const header = lines[0].trim().toLowerCase();
+    let count = 0;
+    const txs = getTxs();
+    let maxId = txs.length ? Math.max(...txs.map(t=>t.id)) : 0;
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].split(',');
+      if (parts.length < 5) continue;
+      const [type,category,...rest] = parts;
+      const date = parts[parts.length-1].trim();
+      const amount = parts[parts.length-2].trim();
+      const description = rest.slice(0,-1).join(',').trim();
+      if (!type||!category||!description||!amount||!date) continue;
+      maxId++;
+      txs.push({id:maxId, type:type.trim(), category:category.trim(), description:description.replace(/^"|"$/g,'').replace(/""/g,'"'), amount:parseFloat(parseFloat(amount)), date});
+      count++;
+    }
+    saveTxs(txs);
+    refresh();
+    populateMonthFilter();
+    toast(`${count} transações importadas!`);
+  } catch { toast('Erro ao ler CSV','error'); }
   e.target.value = '';
 }
 
