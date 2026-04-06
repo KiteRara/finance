@@ -12,64 +12,61 @@
 <div class="page on" id="pg-overview">
 <div class="container">
   <h1>💳 Finance</h1>
-
-  <!-- Month filter -->
   <div class="month-filter">
-    📅 <select id="month-sel"><option value="all">Todos</option></select>
+    <span style="font-size:0.9rem">📅</span> <select id="month-sel"><option value="all">Todos</option></select>
   </div>
-
   <div class="balance">
     <div class="card"><small>Receitas</small><div class="value green" id="v-ine">R$ 0,00</div></div>
     <div class="card"><small>Despesas</small><div class="value red" id="v-exp">R$ 0,00</div></div>
     <div class="card"><small>Saldo</small><div class="value white" id="v-bal">R$ 0,00</div></div>
   </div>
-
   <div class="form-row">
-    <div class="fld"><label>Tipo
-      <select id="f-type" onchange="fillCats('f')">
-        <option value="receita">Receita</option>
-        <option value="expense">Despesa</option>
-      </select></label></div>
+    <div class="fld"><label>Tipo <select id="f-type" onchange="fillCats('f')"><option value="receita">Receita</option><option value="expense">Despesa</option></select></label></div>
     <div class="fld"><label>Categoria <select id="f-cat"></select></label></div>
     <div class="row2">
       <div class="fld"><label>Descrição <input id="f-desc" placeholder="ex: Salário"></label></div>
       <div class="fld"><label>Valor <input id="f-amount" inputmode="numeric" placeholder="0,00" class="money-input"></label></div>
     </div>
     <div class="fld"><label>Data <input id="f-date" type="date"></label></div>
-    <div class="fld"><label class="checkbox-label">
-      <input type="checkbox" id="f-recurring"> Recorrente (mensal)
-    </label></div>
+    <div class="fld"><label class="checkbox-label"><input type="checkbox" id="f-recurring"> Recorrente</label></div>
     <button class="btn-add" onclick="addTx()">Adicionar</button>
   </div>
-
-  <div class="chart-section"><h2>Por categoria</h2><div class="bar-wrap" id="ch-cat"></div></div>
-  <div class="chart-section"><h2>Por mês</h2><div class="bar-wrap" id="ch-mth"></div></div>
-
+  <div class="chart-section">
+    <h2>Por categoria</h2><div class="bar-wrap" id="ch-cat"></div>
+  </div>
+  <div class="chart-section">
+    <h2>Por mês</h2><div class="bar-wrap" id="ch-mth"></div>
+  </div>
   <div class="chart-section">
     <h2>Transações</h2>
     <div class="table-wrap">
-      <table>
-        <thead><tr><th>Tipo</th><th>Cat</th><th>Descrição</th><th>Valor</th><th>Data</th><th></th></tr></thead>
-        <tbody id="tx-list"></tbody>
-      </table>
+      <table><thead><tr><th>Tipo</th><th>Cat</th><th>Descrição</th><th>Valor</th><th>Data</th><th></th></tr></thead>
+      <tbody id="tx-list"></tbody></table>
     </div>
   </div>
 </div>
 </div>
 
-<!-- PAGE: Categories -->
-<div class="page" id="pg-cats">
+<!-- PAGE: Analysis -->
+<div class="page" id="pg-analysis">
 <div class="container">
-  <h1>Categorias</h1>
-  <div id="cats-grid"></div>
+  <h1>📊 Análise</h1>
+
+  <div id="analysis-grid">
+    <div class="donut-wrap"><div id="donut-chart" class="donut-svg" style="position:relative"></div></div>
+    <div class="donut-wrap"><div id="donut-receita" style="position:relative"></div></div>
+    <div class="analysis-card" id="comparison-section"></div>
+    <div class="analysis-card" id="trend-section"></div>
+    <div class="analysis-card" id="monthly-summary"></div>
+    <div class="analysis-card" id="cat-breakdown"></div>
+  </div>
 </div>
 </div>
 
-<!-- PAGE: Budgets & Recurring -->
+<!-- PAGE: Budgets -->
 <div class="page" id="pg-budgets">
 <div class="container">
-  <h1>Orçamentos & Recorrentes</h1>
-
+  <h1>💰 Orçamentos & Recorrentes</h1>
   <div class="budget-section">
     <h2>Orçamentos mensais</h2>
     <div class="budget-input-row" id="budget-form" style="display:none">
@@ -80,7 +77,6 @@
     <button class="btn-budget" onclick="showBudgetForm()" style="margin-bottom:12px">+ Novo orçamento</button>
     <div id="budgets-grid"></div>
   </div>
-
   <div class="budget-section">
     <h2>Transações recorrentes</h2>
     <div id="recurring-grid"></div>
@@ -91,15 +87,15 @@
 <!-- PAGE: Settings -->
 <div class="page" id="pg-settings">
 <div class="container">
-  <h1>Configurações</h1>
+  <h1>⚙️ Configurações</h1>
   <div class="settings">
-    <button onclick="exportData()">&#128190; Exportar dados (JSON)</button>
-    <button onclick="document.getElementById('imp-file').click()">&#128194; Importar dados (JSON)</button>
+    <button onclick="exportData()">💾 Exportar dados (JSON)</button>
+    <button onclick="document.getElementById('imp-file').click()">📂 Importar dados (JSON)</button>
     <input type="file" id="imp-file" accept=".json" style="position:absolute;left:-9999px;width:0;height:0;opacity:0" onchange="importData(event)">
-    <button onclick="exportCSV()">&#128200; Exportar dados (CSV)</button>
-    <button onclick="document.getElementById('csv-file').click()">&#128200; Importar Extrato Bancário (CSV)</button>
+    <button onclick="exportCSV()">📊 Exportar CSV</button>
+    <button onclick="document.getElementById('csv-file').click()">📊 Importar Extrato (CSV)</button>
     <input type="file" id="csv-file" accept=".csv,.json,*/*" style="position:absolute;left:-9999px;width:0;height:0;opacity:0" onchange="importCSV(event)">
-    <button class="danger" onclick="clearAll()">&#10060; Limpar tudo</button>
+    <button class="danger" onclick="clearAll()">🗑 Limpar tudo</button>
   </div>
 </div>
 </div>
@@ -109,10 +105,7 @@
   <div class="modal">
     <h3>Editar</h3>
     <input type="hidden" id="e-id">
-    <label>Tipo <select id="e-type" onchange="fillCats('e')">
-      <option value="receita">Receita</option>
-      <option value="expense">Despesa</option>
-    </select></label>
+    <label>Tipo <select id="e-type" onchange="fillCats('e')"><option value="receita">Receita</option><option value="expense">Despesa</option></select></label>
     <label>Categoria <select id="e-cat"></select></label>
     <label>Descrição <input id="e-desc"></label>
     <label>Valor <input id="e-amt" inputmode="numeric" class="money-input"></label>
@@ -139,10 +132,12 @@
 <!-- Bottom nav -->
 <div class="bnav">
   <button class="on" onclick="goTab('overview')"><span>📊</span>Visão Geral</button>
-  <button onclick="goTab('cats')"><span>🏷</span>Categorias</button>
+  <button onclick="goTab('analysis')"><span>📈</span>Análise</button>
   <button onclick="goTab('budgets')"><span>💰</span>Orçamentos</button>
-  <button onclick="goTab('settings')"><span>⚙</span>Config</button>
+  <button onclick="goTab('settings')"><span>⚙️</span>Config</button>
 </div>
+
+<div id="toast-c" class="toast-container"></div>
 
 <script src="localforage.min.js"></script>
 <script src="app.js" defer></script>

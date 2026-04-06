@@ -2,6 +2,14 @@ const CATS = {
   receita: { icons: {Salary:'Salário',Investments:'Investimentos',Freelance:'Freelance',Other:'Outro'} },
   expense: { icons: {Food:'Alimentação',Transport:'Transporte',Housing:'Moradia',Health:'Saúde',Entertainment:'Lazer',Shopping:'Compras',Education:'Educação',Other:'Outro'} }
 };
+const CAT_NAMES = {};
+for (const [type, cfg] of Object.entries(CATS)) {
+  for (const [key, name] of Object.entries(cfg.icons)) {
+    CAT_NAMES[key] = name;
+  }
+}
+const EXPENSE_COLORS = ['#ef4444','#f97316','#f59e0b','#84cc16','#22c55e','#06b6d4','#6366f1','#a855f7'];
+const REVENUE_COLORS = ['#22c55e','#10b981','#059669','#34d399'];
 
 /* ---- util ---- */
 const fmt = v => parseFloat(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -19,7 +27,6 @@ function moneyInput(el) {
   el.addEventListener('input', () => {
     let digits = el.value.replace(/\D/g, '');
     if (!digits) { el.value = ''; return; }
-    // pad to at least 3 digits so cents always show
     while (digits.length < 3) digits = '0' + digits;
     const cents = digits.slice(-2);
     const intPart = digits.slice(0, -2);
@@ -65,7 +72,6 @@ function confirmDel(msg, onYes) {
 function syncRecurring() {
   const now = new Date();
   const ym = now.toISOString().slice(0,7);
-  // key: "recurringId-month"
   const txs = getTxs();
   const existingKeys = new Set(txs.filter(t=>t.recurringId).map(t=>t.recurringId+'-'+t.date.slice(0,7)));
   const recurring = getRecurring();
@@ -74,7 +80,6 @@ function syncRecurring() {
   for (const rec of recurring) {
     const key = rec.id + '-' + ym;
     if (!existingKeys.has(key)) {
-      // Generate for current month
       const day = Math.min(rec.day || 1, 28);
       const date = `${ym}-${String(day).padStart(2,'0')}`;
       const maxId = txs.length ? Math.max(...txs.map(t=>t.id)) : 0;
@@ -95,7 +100,6 @@ function syncRecurring() {
 
 /* ---- load & refresh ---- */
 async function load() {
-  // sync recurring first
   syncRecurring();
 
   fillCats('f');
@@ -132,12 +136,10 @@ function populateMonthFilter() {
   months.add(ym);
 
   sel.innerHTML = '';
-  // "Todos" option
   const all = document.createElement('option');
   all.value = 'all'; all.textContent = 'Todos';
   sel.appendChild(all);
 
-  // sort desc
   const sorted = [...months].sort().reverse();
   for (const m of sorted) {
     const [y,mo] = m.split('-');
@@ -170,13 +172,14 @@ function refresh() {
   renderTable(txs);
   renderDetailCharts(txs, month);
   renderBudgets(txs);
+  renderAnalysis(allTxs, month);
 }
 
 function fillCats(prefix) {
   const t = document.getElementById(prefix==='f'?'f-type':'e-type').value;
   const sel = document.getElementById(prefix==='f'?'f-cat':'e-cat');
   sel.innerHTML = '';
-  for (const [k,v] of Object.entries(CATS[t]?.icons||{})) {
+  for (const [k,v] of Object.entries(CATS[t] ? CATS[t].icons : {})) {
     const o = document.createElement('option'); o.value = k; o.textContent = v;
     sel.appendChild(o);
   }
@@ -203,30 +206,268 @@ function renderTable(txs) {
   }
 }
 
-/* ---- charts ---- */
+/* ---- overview charts ---- */
 function renderDetailCharts(txs, month) {
-  // Category chart — reflects current filter
+  // Category bar chart — reflects current filter
   const byC={};
   for(const t of txs){ const k=t.type+'|'+t.category; byC[k]=(byC[k]||0)+t.amount; }
   const mc=Math.max(1,...Object.values(byC));
   const cc=document.getElementById('ch-cat'); cc.innerHTML='';
-  if (!Object.keys(byC).length) { cc.innerHTML='<div class="empty">Sem dados para este periodo</div>'; }
+  if (!Object.keys(byC).length) { cc.innerHTML='<div class="empty">Sem dados</div>'; }
   for(const[k,v]of Object.entries(byC).sort((a,b)=>b[1]-a[1])){
     const[type,cat]=k.split('|');
     const ic=iconFor(type,cat);
     cc.innerHTML+=`<div class="bar-row"><span>${ic} ${cat}</span><div class="bar-bg"><div class="bar-fill" style="width:${(v/mc)*100}%;background:${type==='receita'?'#4ade80':'#f87171'}"></div></div><div class="bar-amt">${fmt(v)}</div></div>`;
   }
 
-  // Month chart — always ALL time, regardless of filter
+  // Month bar chart — always ALL time
   const allTxs = getTxs();
   const byM={};
   for(const t of allTxs){ const m=t.date.slice(0,7); const k=m+'|'+(t.type==='receita'?'💚':'❤️'); byM[k]=(byM[k]||0)+t.amount; }
   const mm=Math.max(1,...Object.values(byM));
   const chm=document.getElementById('ch-mth'); chm.innerHTML='';
-  for(const[k,v]of Object.entries(byM)){
-    const[month,tag]=k.split('|');
-    chm.innerHTML+=`<div class="bar-row"><span>${month} ${tag}</span><div class="bar-bg"><div class="bar-fill" style="width:${(v/mm)*100}%;background:${tag==='💚'?'#4ade80':'#f87171'}"></div></div><div class="bar-amt">${fmt(v)}</div></div>`;
+  for(const[k,v]of Object.entries(byM).reverse()){
+    const[mon,tag]=k.split('|');
+    chm.innerHTML+=`<div class="bar-row"><span>${mon} ${tag}</span><div class="bar-bg"><div class="bar-fill" style="width:${(v/mm)*100}%;background:${tag==='💚'?'#4ade80':'#f87171'}"></div></div><div class="bar-amt">${fmt(v)}</div></div>`;
   }
+}
+
+/* ---- ANALYSIS PAGE ---- */
+function renderAnalysis(allTxs, monthFilter) {
+  const container = document.getElementById('analysis-grid');
+  if (!container) return;
+
+  if (!allTxs.length) {
+    container.innerHTML = '<p class="empty" style="font-size:0.85rem">Sem dados para análise.</p>';
+    return;
+  }
+
+  // Current month expenses
+  const now = monthFilter !== 'all' ? monthFilter : new Date().toISOString().slice(0,7);
+  const currentMonthTxs = allTxs.filter(t=>t.date && t.date.startsWith(now));
+  const prevMonth = getPrevMonth(now);
+  const prevTxs = allTxs.filter(t=>t.date && t.date.startsWith(prevMonth));
+
+  // 1. Donut chart - expense distribution this month
+  const expThisMonth = currentMonthTxs.filter(t=>t.type==='expense');
+  const byCat = {};
+  for (const t of expThisMonth) {
+    byCat[t.category] = (byCat[t.category]||0) + t.amount;
+  }
+  const donut = document.getElementById('donut-chart');
+  donut.innerHTML = renderDonut(byCat, EXPENSE_COLORS);
+
+  // 2. Donut chart - revenue distribution this month
+  const incThisMonth = currentMonthTxs.filter(t=>t.type==='receita');
+  const byCatInc = {};
+  for (const t of incThisMonth) {
+    byCatInc[t.category] = (byCatInc[t.category]||0) + t.amount;
+  }
+  const donutInc = document.getElementById('donut-receita');
+  donutInc.innerHTML = renderDonut(byCatInc, REVENUE_COLORS, 'receita');
+
+  // 3. Comparison: month vs previous month
+  const comp = document.getElementById('comparison-section');
+  comp.innerHTML = renderComparison(byCat, prevTxs, now);
+
+  // 4. Trend: balance over months
+  const trend = document.getElementById('trend-section');
+  trend.innerHTML = renderBalanceTrend(allTxs);
+
+  // 5. Monthly summary
+  const summary = document.getElementById('monthly-summary');
+  summary.innerHTML = renderMonthlySummary(currentMonthTxs, now);
+
+  // 6. Category breakdown table
+  catBreakdownTable(byCat);
+}
+
+function getPrevMonth(ym) {
+  const [y, m] = ym.split('-');
+  const d = new Date(parseInt(y), parseInt(m) - 2);
+  return d.toISOString().slice(0,7).slice(0,7);
+}
+
+function renderDonut(data, colors, type='expense') {
+  const entries = Object.entries(data).sort((a,b)=>b[1]-a[1]);
+  const total = entries.reduce((s,[,v])=>s+v,0);
+  if (!total) return '<p class="empty" style="font-size:0.85rem">Sem transações no período</p>';
+
+  // SVG donut
+  const r = 55;
+  const cx = 70;
+  const cy = 70;
+  const circumference = 2 * Math.PI * r;
+  let segments = '';
+  let offset = 0;
+
+  for (const [cat, amount] of entries) {
+    const pct = amount / total;
+    const dashLen = pct * circumference;
+    const dashOff = -offset * circumference;
+    const ic = iconFor(type, cat);
+    const col = colors[entries.indexOf([cat,amount]) % colors.length];
+    segments += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="18"
+      stroke-dasharray="${dashLen} ${circumference-dashLen}"
+      stroke-dashoffset="${dashOff}"
+      transform="rotate(-90 ${cx} ${cy})" />`;
+    offset += pct;
+  }
+
+  let legend = '';
+  for (const [cat, amount] of entries) {
+    const pct = Math.round(amount/total*100);
+    const ic = iconFor(type, cat);
+    const name = CAT_NAMES[cat] || cat;
+    legend += `<div class="donut-legend-item"><span class="dot" style="background:${colors[entries.indexOf([cat,amount]) % colors.length]}"></span>${ic} ${name} ${pct}%</div>`;
+  }
+
+  const title = type === 'expense' ? 'Despesas do mês' : 'Receitas do mês';
+  return `<div class="donut-wrap">
+    <p style="font-size:0.7rem;color:#64748b;text-align:center;margin-bottom:6px">${title}</p>
+    <svg viewBox="0 0 140 140" class="donut-svg">${segments}</svg>
+    <div class="donut-center"><div style="font-size:0.7rem;color:#94a3b8">Total</div><div style="font-weight:700;font-size:1rem">${fmt(total)}</div></div>
+    <div class="donut-legend">${legend}</div>
+  </div>`;
+}
+
+function renderComparison(currentByCat, prevTxs, monthStr) {
+  const prevExp = prevTxs.filter(t=>t.type==='expense');
+  const prevByCat = {};
+  for (const t of prevExp) prevByCat[t.category] = (prevByCat[t.category]||0) + t.amount;
+
+  const allCats = new Set([...Object.keys(currentByCat), ...Object.keys(prevByCat)]);
+  if (!allCats.size) return '<p class="empty" style="font-size:0.85rem">Sem dados para comparar</p>';
+
+  const label = new Date(monthStr+'-15').toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+  let html = `<h3>Comparação mensal</h3><p style="font-size:0.7rem;color:#64748b;margin-bottom:8px">${label} vs mês anterior</p>`;
+
+  const items = [];
+  for (const cat of allCats) {
+    const cur = currentByCat[cat] || 0;
+    const prev = prevByCat[cat] || 0;
+    if (!cur && !prev) continue;
+    const diff = prev > 0 ? ((cur - prev) / prev * 100) : (cur > 0 ? 100 : 0);
+    const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '=';
+    const color = diff > 0 ? '#ef4444' : diff < 0 ? '#22c55e' : '#94a3b8';
+    const ic = iconFor('expense', cat);
+    const name = CAT_NAMES[cat] || cat;
+    if (diff > 0) {
+      items.push(`<div class="comparison-row"><span>${ic} ${name}</span><span style="color:${color};font-weight:600">${arrow} ${Math.abs(Math.round(diff))}%</span><span style="font-size:0.7rem;color:#94a3b8">${fmt(prev)} → ${fmt(cur)}</span></div>`);
+    } else if (diff < 0) {
+      items.push(`<div class="comparison-row"><span>${ic} ${name}</span><span style="color:${color};font-weight:600">${arrow} ${Math.abs(Math.round(diff))}%</span><span style="font-size:0.7rem;color:#94a3b8">${fmt(prev)} → ${fmt(cur)}</span></div>`);
+    } else {
+      items.push(`<div class="comparison-row"><span>${ic} ${name}</span><span style="color:#94a3b8">=</span><span style="font-size:0.7rem;color:#94a3b8">${fmt(cur)}</span></div>`);
+    }
+  }
+
+  html += items.join('');
+  return html;
+}
+
+function renderBalanceTrend(allTxs) {
+  const months = {};
+  for (const t of allTxs) {
+    const m = t.date.slice(0,7);
+    if (!months[m]) months[m] = { income: 0, expense: 0 };
+    if (t.type === 'receita') months[m].income += t.amount;
+    else months[m].expense += t.amount;
+  }
+
+  const sorted = Object.entries(months).sort((a,b)=>a[0].localeCompare(b[0]));
+  let cumulative = 0;
+  const points = sorted.map(([month, data]) => {
+    cumulative += data.income - data.expense;
+    return { month, balance: cumulative };
+  });
+
+  if (!points.length) return '<p class="empty" style="font-size:0.85rem">Sem dados</p>';
+
+  const absMax = Math.max(1, ...points.map(p => Math.abs(p.balance)));
+  const w = 280, h = 100, pad = 8;
+  const stepX = points.length > 1 ? (w - pad*2) / (points.length - 1) : 0;
+
+  let pathD = '';
+  let dots = '';
+  let labels = '';
+  points.forEach((p, i) => {
+    const x = pad + i * stepX;
+    const mid = (h - pad*2) / 2;
+    const y = (h - pad) - ((p.balance / absMax) * mid + mid);
+    pathD += (i===0 ? `M${x},${y}` : ` L${x},${y}`);
+    dots += `<circle cx="${x}" cy="${y}" r="2.5" fill="${p.balance>=0?'#4ade80':'#f87171'}" />`;
+    // label every few or just last
+    if (i === points.length - 1 || i === 0) {
+      const [y2,m] = p.month.split('-');
+      const d = new Date(parseInt(y2), parseInt(m)-1);
+      labels += `<text x="${x}" y="${h-1}" fill="#64748b" font-size="6" text-anchor="middle">${d.toLocaleDateString('pt-BR',{month:'short','year':'2-digit'})}</text>`;
+    }
+  });
+
+  const lastBal = points[points.length-1].balance;
+  const color = lastBal >= 0 ? '#4ade80' : '#f87171';
+  const lastPt = points.length ? points[points.length-1] : null;
+  const labelY = lastPt ? (h - pad) - ((lastPt.balance / absMax) * (h-pad*2)/2 + (h-pad*2)/2) - 6 : pad - 6;
+  const labelX = points.length > 1 ? pad + (points.length-1) * stepX : pad;
+
+  return `<h3>Tendência de saldo</h3>
+    <p style="font-size:0.75rem;color:${color};margin-bottom:8px">${lastBal>=0?'↑':'↓'} ${fmt(lastBal)} acumulado</p>
+    <svg viewBox="0 0 ${w} ${h}" width="100%" style="overflow:visible">
+      <line x1="${pad}" y1="${h-pad - (h-pad*2)/2}" x2="${w-pad}" y2="${h-pad - (h-pad*2)/2}" stroke="#334155" stroke-dasharray="2,3" />
+      <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      ${dots}
+      <text x="${labelX}" y="${labelY}" fill="${color}" font-size="6" font-weight="600">${fmt(lastBal)}</text>
+      ${labels}
+    </svg>`;
+}
+
+function renderMonthlySummary(txs, monthStr) {
+  const ine = txs.filter(t=>t.type==='receita').reduce((s,t)=>s+t.amount,0);
+  const exp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const bal = ine - exp;
+  const label = new Date(monthStr+'-15').toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+
+  // Top expense category
+  const byCat = {};
+  for (const t of txs.filter(t=>t.type==='expense')) byCat[t.category] = (byCat[t.category]||0) + t.amount;
+  const topCat = Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  let topHtml = '';
+  if (topCat && topCat[1] > 0) {
+    const pct = Math.round(topCat[1] / Math.max(1, exp) * 100);
+    const ic = iconFor('expense', topCat[0]);
+    const name = CAT_NAMES[topCat[0]] || topCat[0];
+    topHtml = `Maior gasto: ${ic} ${name} (${pct}%)`;
+  }
+
+  return `<h3>Resumo do mês</h3>
+    <p style="font-size:0.8rem;color:#94a3b8;line-height:1.6">${label}:</p>
+    <p style="font-size:0.82rem;line-height:1.7">
+    Receita: <span style="color:#4ade80;font-weight:600">${fmt(ine)}</span><br>
+    Despesas: <span style="color:#f87171;font-weight:600">${fmt(exp)}</span><br>
+    Sobra: <span style="color:${bal>=0?'#4ade80':'#f87171'};font-weight:600">${fmt(bal)}</span><br>
+    ${topHtml ? topHtml + '<br>' : ''}
+    Transações: ${txs.length}
+    </p>`;
+}
+
+function catBreakdownTable(byCat) {
+  const container = document.getElementById('cat-breakdown');
+  if (!container) return;
+  const total = Object.values(byCat).reduce((s,v)=>s+v,0);
+  if (!total) {
+    container.innerHTML = '<p class="empty" style="font-size:0.85rem">Sem transações</p>';
+    return;
+  }
+  const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  let html = '<table><thead><tr><th style="padding:6px 8px">Categoria</th><th style="padding:6px 8px">Valor</th><th style="padding:6px 8px">%</th></tr></thead><tbody>';
+  for (const [cat, amount] of sorted) {
+    const pct = Math.round(amount/total*100);
+    const ic = iconFor('expense', cat);
+    const name = CAT_NAMES[cat] || cat;
+    html += `<tr><td style="padding:8px;font-size:0.82rem">${ic} ${name}</td><td style="padding:8px;font-size:0.82rem">${fmt(amount)}</td><td style="padding:8px;font-size:0.82rem">${pct}%</td></tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
 }
 
 /* ---- add transaction ---- */
@@ -245,9 +486,8 @@ function addTx() {
   txs.push({id,type,category,description,amount,date});
   saveTxs(txs);
 
-  // save recurring
   if (isRecurring) {
-    const day = new Date(date+ 'T12:00:00').getDate();
+    const day = new Date(date+'T12:00:00').getDate();
     const recurring = getRecurring();
     const rid = 'r_' + Date.now();
     recurring.push({id:rid, type, category, description, amount, day});
@@ -400,19 +640,9 @@ function goTab(name) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+name).classList.add('on');
   document.querySelectorAll('.bnav button').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('.bnav button')[['overview','cats','budgets','settings'].indexOf(name)].classList.add('on');
-  if(name==='cats') showCats();
+  document.querySelectorAll('.bnav button')[['overview','analysis','budgets','settings'].indexOf(name)].classList.add('on');
+  if(name==='analysis') renderAnalysis(getTxs(), document.getElementById('month-sel').value);
   if(name==='budgets') { renderBudgets(getTxs()); showRecurring(); }
-}
-
-function showCats() {
-  const g=document.getElementById('cats-grid'); g.innerHTML='';
-  for(const[type,c]of Object.entries(CATS)){
-    const lbl=type==='receita'?'Receitas':'Despesas';
-    let h=`<h3 style="margin-bottom:8px;margin-top:12px">${lbl}</h3>`;
-    for(const[ic,name]of Object.entries(c.icons)) h+=`<div style="padding:5px 0;font-size:.95rem">${iconFor(type,ic)} ${name}</div>`;
-    g.innerHTML+=h;
-  }
 }
 
 /* ---- export/import ---- */
