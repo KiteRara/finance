@@ -1,12 +1,8 @@
 apply plugin: 'com.android.application'
 
-apply plugin: 'com.android.application'
-
 android {
     namespace = "com.finance.app"
     compileSdk = rootProject.ext.compileSdkVersion
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
     defaultConfig {
         applicationId "com.finance.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -20,10 +16,14 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
