@@ -381,10 +381,15 @@ function importCSV(e) {
           const parts = lines[i].split(',');
           if (parts.length < 4) continue;
           const dateRaw = parts[0].trim();
-          const amount = parts[1].trim().replace('.', '').replace(',', '.');
+          let amountStr = parts[1].trim();
+          // Nubank CSV usa ponto como decimal: "-10.00" => parseFloat direto
+          // Se tiver vírgula como decimal, converter para ponto
+          if (amountStr.includes(',') && !amountStr.includes('.')) {
+            amountStr = amountStr.replace(',', '.');
+          }
           const description = parts.slice(3).join(',').trim();
-          if (!dateRaw || !amount || !description) continue;
-          const amountNum = parseFloat(amount);
+          if (!dateRaw || !amountStr || !description) continue;
+          const amountNum = parseFloat(amountStr);
           if (isNaN(amountNum)) continue;
           const type = amountNum > 0 ? 'receita' : 'expense';
           const date = dateRaw.split('/').reverse().join('/').split('/').length === 3 ? dateRaw.split('/').reverse().join('-') : dateRaw;
