@@ -1,0 +1,19 @@
+# Android build
+android/app/build/
+android/.gradle/
+android/.idea/
+*.apk
+
+# Node
+node_modules/
+
+# DB
+*.db
+
+# IDE
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+desktop.ini

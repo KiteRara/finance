@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Finance</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; overflow-x: hidden; }
+
+  .container { max-width: 600px; margin: 0 auto; padding: 20px 14px 80px; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 18px; }
+
+  /* Balance */
+  .balance { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .card { background: #1e293b; border-radius: 12px; padding: 14px 12px; text-align: center; }
+  .card small { color: #94a3b8; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 1px; }
+  .card .value { font-size: 1.1rem; font-weight: 700; margin-top: 4px; }
+  .green { color: #4ade80; } .red { color: #f87171; } .white { color: #e2e8f0; }
+
+  /* Form */
+  .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; background: #1e293b; padding: 14px; border-radius: 12px; align-items: flex-end; }
+  .fld { flex: 1; min-width: 120px; }
+  .row2 { display: flex; gap: 8px; }
+  .row2 .fld { min-width: 0; }
+  label { display: flex; flex-direction: column; gap: 3px; font-size: 0.7rem; color: #94a3b8; }
+  input, select { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 11px; color: #e2e8f0; font-size: 0.88rem; width: 100%; }
+  input:focus, select:focus { outline: none; border-color: #6366f1; }
+  .btn-add { padding: 10px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.88rem; background: #6366f1; color: white; width: 100%; margin-top: 6px; }
+  .btn-add:active { background: #4f46e5; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 8px 6px; color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; }
+  td { padding: 10px 6px; border-bottom: 1px solid #1e293b66; font-size: 0.82rem; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.72rem; }
+  .pill-r { background: #14532d33; color: #4ade80; }
+  .pill-e { background: #7f1d1d33; color: #f87171; }
+  .tx-actions { display: flex; gap: 4px; }
+  .btn-s { background: none; border: none; font-size: 1rem; cursor: pointer; padding: 2px 4px; }
+  .btn-s:active { opacity: 0.6; }
+
+  /* Chart */
+  .chart-section { margin-top: 22px; }
+  .chart-section h2 { font-size: 1rem; margin-bottom: 10px; }
+  .bar-wrap { display: flex; flex-direction: column; gap: 5px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-row span:first-child { width: 100px; font-size: 0.8rem; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-bg { flex: 1; background: #1e293b; border-radius: 6px; height: 24px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width .4s ease; }
+  .bar-amt { font-size: 0.8rem; font-weight: 600; width: 75px; text-align: right; }
+
+  /* Bottom nav */
+  .bnav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: #1e293b; border-top: 1px solid #334155; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+  .bnav button { flex: 1; padding: 10px; background: none; border: none; color: #64748b; font-size: 0.7rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .bnav button.on { color: #6366f1; }
+  .bnav button span { font-size: 1.2rem; }
+
+  .page { display: none; }
+  .page.on { display: block; }
+
+  /* Modal */
+  .modal-ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 100; align-items: center; justify-content: center; }
+  .modal-ov.open { display: flex; }
+  .modal { background: #1e293b; border-radius: 14px; padding: 22px; width: 330px; max-width: 92%; }
+  .modal h3 { margin-bottom: 12px; }
+  .modal label { margin-bottom: 8px; }
+  .modal input, .modal select { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; color: #e2e8f0; font-size: 0.9rem; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+  .btn-sv { background: #22c55e; color: #fff; border: none; border-radius: 8px; padding: 9px 18px; font-weight: 600; cursor: pointer; }
+  .btn-cx { background: #334155; color: #e2e8f0; border: none; border-radius: 8px; padding: 9px 18px; font-weight: 500; cursor: pointer; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 30px 0; color: #64748b; }
+
+  /* Settings */
+  .settings { margin-top: 10px; }
+  .settings button { width: 100%; padding: 14px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; color: #e2e8f0; font-size: 0.9rem; margin-bottom: 8px; cursor: pointer; text-align: left; }
+  .settings button:active { background: #334155; }
+  .settings button.danger { border-color: #7f1d1d; color: #f87171; }
+</style>
+</head>
+<body>
+
+<!-- PAGE: Overview -->
+<div class="page on" id="pg-overview">
+<div class="container">
+  <h1>💳 Finance</h1>
+
+  <div class="balance">
+    <div class="card"><small>Receitas</small><div class="value green" id="v-ine">R$ 0,00</div></div>
+    <div class="card"><small>Despesas</small><div class="value red" id="v-exp">R$ 0,00</div></div>
+    <div class="card"><small>Saldo</small><div class="value white" id="v-bal">R$ 0,00</div></div>
+  </div>
+
+  <div class="form-row">
+    <div class="fld"><label>Tipo
+      <select id="f-type" onchange="fillCats('f')">
+        <option value="receita">Receita</option>
+        <option value="expense">Despesa</option>
+      </select></label></div>
+    <div class="fld"><label>Categoria <select id="f-cat"></select></label></div>
+    <div class="row2">
+      <div class="fld"><label>Descrição <input id="f-desc" placeholder="ex: Salário"></label></div>
+      <div class="fld"><label>Valor <input id="f-amount" type="number" step="0.01" min="0" placeholder="0,00"></label></div>
+    </div>
+    <div class="fld"><label>Data <input id="f-date" type="date"></label></div>
+    <button class="btn-add" onclick="addTx()">Adicionar</button>
+  </div>
+
+  <div class="chart-section"><h2>Por categoria</h2><div class="bar-wrap" id="ch-cat"></div></div>
+  <div class="chart-section"><h2>Por mês</h2><div class="bar-wrap" id="ch-mth"></div></div>
+
+  <div class="chart-section">
+    <h2>Transações</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tipo</th><th>Cat</th><th>Descrição</th><th>Valor</th><th>Data</th><th></th></tr></thead>
+        <tbody id="tx-list"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE: Categories -->
+<div class="page" id="pg-cats">
+<div class="container">
+  <h1>Categorias</h1>
+  <div id="cats-grid"></div>
+</div>
+</div>
+
+<!-- PAGE: Settings -->
+<div class="page" id="pg-settings">
+<div class="container">
+  <h1>Configurações</h1>
+  <div class="settings">
+    <button onclick="exportData()">&#128190;  Exportar dados (JSON)</button>
+    <button onclick="document.getElementById('imp-file').click()">&#128194;  Importar dados</button>
+    <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="danger" onclick="clearAll()">&#10060;  Limpar tudo</button>
+  </div>
+</div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-ov" id="m-ov" onclick="if(event.target===this)closeM()">
+  <div class="modal">
+    <h3>Editar</h3>
+    <input type="hidden" id="e-id">
+    <label>Tipo <select id="e-type" onchange="fillCats('e')">
+      <option value="receita">Receita</option>
+      <option value="expense">Despesa</option>
+    </select></label>
+    <label>Categoria <select id="e-cat"></select></label>
+    <label>Descrição <input id="e-desc"></label>
+    <label>Valor <input id="e-amt" type="number" step="0.01" min="0"></label>
+    <label>Data <input id="e-date" type="date"></label>
+    <div class="modal-btns">
+      <button class="btn-cx" onclick="closeM()">Cancelar</button>
+      <button class="btn-sv" onclick="saveTx()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bnav">
+  <button class="on" onclick="goTab('overview')"><span>📊</span>Visão Geral</button>
+  <button onclick="goTab('cats')"><span>🏷</span>Categorias</button>
+  <button onclick="goTab('settings')"><span>⚙</span>Config</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+<script>
+const STORE = 'transactions';
+const db = localforage.createInstance({ name: 'finance', storeName: STORE });
+
+const CATS = {
+  receita: { icons: {Salary:'Salário',Investments:'Investimentos',Freelance:'Freelance',Other:'Outro'} },
+  expense: { icons: {Food:'Alimentação',Transport:'Transporte',Housing:'Moradia',Health:'Saúde',Entertainment:'Lazer',Shopping:'Compras',Education:'Educação',Other:'Outro'} }
+};
+
+const fmt = v => parseFloat(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const iconFor = (type, cat) => { for(const[k,v]of Object.entries(CATS[type]?.icons||{})){if(k===cat)return v;} return '';}
+
+async function load() {
+  fillCats('f');
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  await refresh();
+}
+
+function fillCats(prefix) {
+  const t = document.getElementById(prefix === 'f' ? 'f-type' : 'e-type').value;
+  const sel = document.getElementById(prefix === 'f' ? 'f-cat' : 'e-cat');
+  sel.innerHTML = '';
+  for (const [k,v] of Object.entries(CATS[t]?.icons || {})) {
+    const o = document.createElement('option'); o.value = k; o.textContent = iconFor(t,k)+' '+v;
+    sel.appendChild(o);
+  }
+}
+
+async function refresh() {
+  const txs = await db.values();
+  txs.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  const ine = txs.filter(t=>t.type==='receita').reduce((s,t)=>s+t.amount,0);
+  const exp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('v-ine').textContent = fmt(ine);
+  document.getElementById('v-exp').textContent = fmt(exp);
+  document.getElementById('v-bal').textContent = fmt(ine-exp);
+  renderTable(txs);
+  renderCharts(txs);
+}
+
+function renderTable(txs) {
+  const tb = document.getElementById('tx-list');
+  if (!txs.length) { tb.innerHTML='<tr><td colspan="6"><div class="empty">Nenhuma transação ainda</div></td></tr>'; return; }
+  tb.innerHTML = '';
+  for (const t of txs) {
+    const tr = document.createElement('tr');
+    const lbl = t.type==='receita'?'Receita':'Despesa';
+    const p = t.type==='receita'?'pill-r':'pill-e';
+    const ic = iconFor(t.type, t.category);
+    tr.innerHTML = `<td><span class="pill ${p}">${lbl}</span></td>
+      <td>${ic} ${t.category}</td>
+      <td>${t.description}</td>
+      <td>${fmt(t.amount)}</td>
+      <td>${new Date(t.date+'T12:00:00').toLocaleDateString('pt-BR')}</td>
+      <td class="tx-actions"><button class="btn-s" onclick="editTx(${t.id})">✏</button><button class="btn-s" onclick="delTx(${t.id})">✕</button></td>`;
+    tb.appendChild(tr);
+  }
+}
+
+function renderCharts(txs) {
+  // by category
+  const byC={};
+  for(const t of txs){ const k=t.type+'|'+t.category; byC[k]=(byC[k]||0)+t.amount; }
+  const mc=Math.max(1,...Object.values(byC));
+  const cc=document.getElementById('ch-cat'); cc.innerHTML='';
+  for(const[k,v]of Object.entries(byC).sort((a,b)=>b[1]-a[1])){
+    const[type,cat]=k.split('|');
+    const ic=iconFor(type,cat);
+    cc.innerHTML+=`<div class="bar-row"><span>${ic} ${cat}</span><div class="bar-bg"><div class="bar-fill" style="width:${(v/mc)*100}%;background:${type==='receita'?'#4ade80':'#f87171'}"></div></div><div class="bar-amt">${fmt(v)}</div></div>`;
+  }
+
+  // by month
+  const byM={};
+  for(const t of txs){ const m=t.date.slice(0,7); const k=m+'|'+(t.type==='receita'?'💚':'❤️'); byM[k]=(byM[k]||0)+t.amount; }
+  const mm=Math.max(1,...Object.values(byM));
+  const chm=document.getElementById('ch-mth'); chm.innerHTML='';
+  for(const[k,v]of Object.entries(byM)){
+    const[month,tag]=k.split('|');
+    chm.innerHTML+=`<div class="bar-row"><span>${month} ${tag}</span><div class="bar-bg"><div class="bar-fill" style="width:${(v/mm)*100}%;background:${tag==='💚'?'#4ade80':'#f87171'}"></div></div><div class="bar-amt">${fmt(v)}</div></div>`;
+  }
+}
+
+async function addTx() {
+  const type=document.getElementById('f-type').value;
+  const category=document.getElementById('f-cat').value;
+  const description=document.getElementById('f-desc').value.trim();
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const date=document.getElementById('f-date').value;
+  if(!description||!amount||!date) return alert('Preencha tudo');
+  const items=await db.values();
+  const id=items.length?Math.max(...items.map(t=>t.id))+1:1;
+  await db.setItem(id,{id,type,category,description,amount,date});
+  document.getElementById('f-desc').value='';
+  document.getElementById('f-amount').value='';
+  document.getElementById('f-desc').focus();
+  await refresh();
+}
+
+async function delTx(id) { if(confirm('Apagar?')){ await db.removeItem(id); await refresh(); } }
+
+async function editTx(id) {
+  const t=await db.getItem(id); if(!t)return;
+  document.getElementById('e-id').value=t.id;
+  fillCats('e');
+  document.getElementById('e-type').value=t.type; fillCats('e');
+  document.getElementById('e-cat').value=t.category;
+  document.getElementById('e-desc').value=t.description;
+  document.getElementById('e-amt').value=t.amount;
+  document.getElementById('e-date').value=t.date;
+  document.getElementById('m-ov').classList.add('open');
+}
+
+async function saveTx() {
+  const id=parseInt(document.getElementById('e-id').value);
+  const t=await db.getItem(id); if(!t)return;
+  t.category=document.getElementById('e-cat').value;
+  t.description=document.getElementById('e-desc').value;
+  t.amount=parseFloat(document.getElementById('e-amt').value);
+  t.date=document.getElementById('e-date').value;
+  t.type=document.getElementById('e-type').value;
+  await db.setItem(id,t);
+  document.getElementById('m-ov').classList.remove('open');
+  await refresh();
+}
+
+function closeM(){ document.getElementById('m-ov').classList.remove('open'); }
+
+function goTab(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  document.querySelectorAll('.bnav button').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.bnav button')[['overview','cats','settings'].indexOf(name)].classList.add('on');
+  if(name==='cats') showCats();
+}
+
+function showCats() {
+  const g=document.getElementById('cats-grid'); g.innerHTML='';
+  for(const[type,c]of Object.entries(CATS)){
+    const lbl=type==='receita'?'Receitas':'Despesas';
+    let h=`<h3 style="margin-bottom:8px;margin-top:12px">${lbl}</h3>`;
+    for(const[ic,name]of Object.entries(c.icons)) h+=`<div style="padding:5px 0;font-size:.95rem">${iconFor(type,ic)} ${name}</div>`;
+    g.innerHTML+=h;
+  }
+}
+
+async function exportData() {
+  const txs=await db.values();
+  const blob=new Blob([JSON.stringify(txs,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='finance_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+
+async function importData(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const text=await file.text();
+  try {
+    const txs=JSON.parse(text);
+    if(!Array.isArray(txs)) return alert('Formato inválido');
+    for(const t of txs) await db.setItem(t.id,t);
+    await refresh();
+    alert(`${txs.length} transações importadas!`);
+  } catch { alert('Erro ao ler arquivo'); }
+  e.target.value='';
+}
+
+async function clearAll() {
+  if(confirm('Tem certeza? Todos os dados serão apagados.')) {
+    const txs=await db.values();
+    for(const t of txs) await db.removeItem(t.id);
+    await refresh();
+  }
+}
+
+load();
+</script>
+</body>
+</html>

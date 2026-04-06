@@ -1,0 +1,6 @@
+{
+  "appId": "com.finance.app",
+  "appName": "finance",
+  "webDir": "www",
+  "server": { "cleartext": true }
+}
