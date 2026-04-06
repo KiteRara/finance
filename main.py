@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 import sqlite3
 import os
+import csv
+import io
 from datetime import datetime
 
 app = FastAPI()
@@ -166,3 +168,47 @@ def summary():
             "by_month": [dict(r) for r in by_month_raw],
         }
     }
+
+
+@app.get("/api/export-csv")
+def export_csv():
+    conn = get_db()
+    rows = conn.execute("SELECT type, category, description, amount, date FROM transactions ORDER BY date DESC").fetchall()
+    conn.close()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["tipo", "categoria", "descricao", "valor", "data"])
+    for r in rows:
+        writer.writerow([r["type"], r["category"], r["description"], r["amount"], r["date"]])
+    return Response(content=output.getvalue(), media_type="text/csv", headers={
+        "Content-Disposition": "attachment; filename=finance_export.csv"
+    })
+
+
+@app.post("/api/import-csv")
+async def import_csv(request: Request):
+    body = await request.body()
+    text = body.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text))
+    conn = get_db()
+    count = 0
+    for row in reader:
+        t = row.get("tipo", "").strip()
+        category = row.get("categoria", "").strip()
+        description = row.get("descricao", "").strip()
+        amount = row.get("valor", "").strip()
+        date = row.get("data", "").strip()
+        if not all([t, category, description, amount, date]):
+            continue
+        try:
+            amount_f = float(amount.replace(",", "."))
+        except ValueError:
+            continue
+        conn.execute(
+            "INSERT INTO transactions (type, category, description, amount, date) VALUES (?, ?, ?, ?, ?)",
+            (t, category, description, amount_f, date),
+        )
+        count += 1
+    conn.commit()
+    conn.close()
+    return {"data": {"imported": count}}

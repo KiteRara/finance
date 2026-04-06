@@ -76,6 +76,12 @@
 <div class="container">
   <h1>💳 Finance</h1>
 
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-add" style="background:#1e293b;border:1px solid #334155" onclick="exportCSV()">Exportar CSV</button>
+    <button class="btn btn-add" style="background:#1e293b;border:1px solid #334155" onclick="document.getElementById('csv-file').click()">Importar CSV</button>
+    <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="importCSV(event)">
+  </div>
+
   <div class="tabs">
     <button class="tab active" data-t="overview">Visão Geral</button>
     <button class="tab" data-t="categories">Categorias</button>
@@ -91,10 +97,7 @@
 
     <div class="form-row" id="add-form">
       <label>Tipo
-        <select id="f-type" onchange="updateCat()">
-          <option value="receita">Receita</option>
-          <option value="expense">Despesa</option>
-        </select>
+        <select id="f-type" onchange="updateCat()"></select>
       </label>
       <label>Categoria <select id="f-cat"></select></label>
       <label>Descrição <input id="f-desc" placeholder="ex: Salário"></label>
@@ -155,7 +158,6 @@ async function api(url) {
 
 async function load() {
   cats = await api('/categories');
-  // set tabs
   for (const t of Object.keys(cats)) {
     const sel = document.getElementById('f-type');
     const opt = document.createElement('option');
@@ -163,11 +165,6 @@ async function load() {
     if (t === 'expense') opt.selected = true;
     sel.appendChild(opt);
   }
-  // remove dupes
-  const sel = document.getElementById('f-type');
-  const vals = {};
-  [...sel.children].forEach(o => { if (vals[o.value]) o.remove(); else vals[o.value] = true; });
-
   updateCat();
   await refresh();
 }
@@ -326,6 +323,30 @@ function showCatsTab() {
 
 // Init default date
 document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+
+// CSV
+async function exportCSV() {
+  const r = await fetch(`${API}/api/export-csv`);
+  const blob = await r.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'finance_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+async function importCSV(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const body = new FormData();
+  body.append('file', file);
+  const r = await fetch(`${API}/api/import-csv`, {
+    method: 'POST', headers: {'Content-Type': 'text/csv'},
+    body: file
+  });
+  const j = await r.json();
+  alert(`${j.data.imported} transações importadas!`);
+  await refresh();
+  e.target.value = '';
+}
 
 load();
 </script>

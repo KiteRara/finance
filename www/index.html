@@ -138,8 +138,11 @@
   <h1>Configurações</h1>
   <div class="settings">
     <button onclick="exportData()">&#128190;  Exportar dados (JSON)</button>
-    <button onclick="document.getElementById('imp-file').click()">&#128194;  Importar dados</button>
+    <button onclick="document.getElementById('imp-file').click()">&#128194;  Importar dados (JSON)</button>
     <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importData(event)">
+    <button onclick="exportCSV()">&#128200;  Exportar dados (CSV)</button>
+    <button onclick="document.getElementById('csv-file').click()">&#128200;  Importar dados (CSV)</button>
+    <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="importCSV(event)">
     <button class="danger" onclick="clearAll()">&#10060;  Limpar tudo</button>
   </div>
 </div>
@@ -349,12 +352,44 @@ function importData(e) {
   });
 }
 
-function clearAll() {
-  if(confirm('Tem certeza? Todos os dados serão apagados.')) {
-    localStorage.removeItem('finance_txs');
-    refresh();
+function exportCSV() {
+  const txs = getTxs();
+  let csv = 'tipo,categoria,descricao,valor,data\n';
+  for (const t of txs) {
+    csv += `${t.type},${t.category},"${t.description.replace(/"/g,'""')}",${t.amount},${t.date}\n`;
   }
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'finance_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
 }
+
+function importCSV(e) {
+  const file = e.target.files[0]; if (!file) return;
+  file.text().then(text => {
+    try {
+      const lines = text.trim().split('\n');
+      if (lines.length < 2) return alert('CSV vazio');
+      const txs = getTxs();
+      let maxId = txs.length ? Math.max(...txs.map(t => t.id)) : 0;
+      let count = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const [type, category, description, amount, date] = lines[i].split(',').map(s => s.trim());
+        if (!type || !category || !description || !amount || !date) continue;
+        maxId++;
+        txs.push({id: maxId, type, category, description: description.replace(/^"|"$/g,'').replace(/""/g,'"'), amount: parseFloat(amount), date});
+        count++;
+      }
+      saveTxs(txs);
+      refresh();
+      alert(`${count} transações importadas!`);
+    } catch { alert('Erro ao ler arquivo CSV'); }
+    e.target.value = '';
+  });
+}
+
+function clearAll() {
 
 load();
 </script>
